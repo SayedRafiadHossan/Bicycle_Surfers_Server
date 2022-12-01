@@ -6,7 +6,6 @@ const {
 } = require("mongodb");
 
 // const admin = require("firebase-admin");
-
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -52,6 +51,7 @@ async function run() {
     const allProductsCollection = database.collection("allProducts");
     const allBookingCollection = database.collection("allBooking");
     const allUsersCollection = database.collection("allUsers");
+    const allPaymentCollection = database.collection("paymentDetails");
 
     //-------------GET AREA Start-----------------//
 
@@ -70,6 +70,21 @@ async function run() {
       const allBooking = await cursor.toArray();
       res.send(allBooking);
     });
+    //get all users
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const cursor = allUsersCollection.find(query);
+      const allUsers = await cursor.toArray();
+      res.send(allUsers);
+    });
+
+    // get a specific user
+    app.get("/allUsers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { email: id };
+      const user = await allUsersCollection.findOne(query);
+      res.json(user);
+    });
 
     //-------------Post AREA Start-----------------//
 
@@ -78,14 +93,51 @@ async function run() {
     app.post("/booking", async (req, res) => {
       const booking = req.body;
       const result = await allBookingCollection.insertOne(booking);
-      res.json(result);
+      res.send(result);
+    });
 
-      // post a new user
-      app.post("/users", async (req, res) => {
-        const user = req.body;
-        const result = await allUsersCollection.insertOne(user);
-        res.json(result);
-      });
+    app.post("/addProduct", async (req, res) => {
+      const product = req.body;
+      const result = await allProductsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    //paymentDetails post
+    app.post("/payment", async (req, res) => {
+      const payment = req.body;
+      const result = await allPaymentCollection.insertOne(payment);
+      res.send(result);
+    });
+
+    // post a new user
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await allUsersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // upsert user
+    app.put("/users", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const options = { upsert: true };
+      const updateDoc = { $set: user };
+      const result = await allUsersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
+    //update booking
+    app.put("/booking/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = { $set: { paid: true } };
+
+      const result = await allBookingCollection.updateOne(filter, updateDoc);
+      res.json(result);
     });
   } finally {
   }

@@ -4,7 +4,9 @@ const {
   MongoRuntimeError,
   ObjectId,
 } = require("mongodb");
+
 // const admin = require("firebase-admin");
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -51,7 +53,7 @@ async function run() {
     const allBookingCollection = database.collection("allBooking");
     const allUsersCollection = database.collection("allUsers");
 
-    //-------------GET AREA-----------------//
+    //-------------GET AREA Start-----------------//
 
     //get all the products
     app.get("/allProducts", async (req, res) => {
@@ -71,7 +73,8 @@ async function run() {
 
     //-------------Post AREA Start-----------------//
 
-    // post a new service
+    // Post a new service
+
     app.post("/booking", async (req, res) => {
       const booking = req.body;
       const result = await allBookingCollection.insertOne(booking);

@@ -69,7 +69,7 @@ async function run() {
       res.send(allBooking);
     });
 
-    //-------------Post AREA-----------------//
+    //-------------Post AREA Start-----------------//
 
     // post a new service
     app.post("/booking", async (req, res) => {

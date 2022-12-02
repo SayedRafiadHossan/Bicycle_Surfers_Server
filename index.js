@@ -88,6 +88,15 @@ async function run() {
       res.json(user);
     });
 
+    // get all user
+
+    app.get("/allUsers", async (req, res) => {
+      const query = {};
+      const cursor = allUsersCollection.find(query);
+      const allUsers = await cursor.toArray();
+      res.send(allUsers);
+    });
+
     //-------------Post AREA Start-----------------//
 
     // Post a new service

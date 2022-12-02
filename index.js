@@ -54,6 +54,7 @@ async function run() {
     const allBookingCollection = database.collection("allBooking");
     const allUsersCollection = database.collection("allUsers");
     const allPaymentCollection = database.collection("paymentDetails");
+    const advertiseCollection = database.collection("advertise");
 
     //-------------GET AREA Start-----------------//
 
@@ -63,6 +64,15 @@ async function run() {
       const cursor = allProductsCollection.find(query);
       const allProducts = await cursor.toArray();
       res.send(allProducts);
+    });
+
+    // get advertise api
+
+    app.get("/advertise", async (req, res) => {
+      const query = {};
+      const cursor = advertiseCollection.find(query);
+      const advertise = await cursor.toArray();
+      res.send(advertise);
     });
 
     //get all the booking
@@ -113,6 +123,14 @@ async function run() {
       res.send(result);
     });
 
+    // advertise post
+
+    app.post("/advertise", async (req, res) => {
+      const advertise = req.body;
+      const result = await advertiseCollection.insertOne(advertise);
+      res.send(result);
+    });
+
     //paymentDetails post
     app.post("/payment", async (req, res) => {
       const payment = req.body;
@@ -141,6 +159,13 @@ async function run() {
       res.json(result);
     });
 
+    // post a new user
+    app.post("/advertise", async (req, res) => {
+      const ads = req.body;
+      const result = await advertiseCollection.insertOne(ads);
+      res.send(result);
+    });
+
     //update booking
     app.put("/booking/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
@@ -164,7 +189,29 @@ async function run() {
       }
     });
 
-    app.delete("/addProduct/:id", async (req, res) => {
+    //update seller status
+
+    app.put("/updateSellerStatus", verifyToken, async (req, res) => {
+      const requester = req.decodedEmail;
+
+      if (requester) {
+        const requesterAccount = await allUsersCollection.findOne({
+          email: requester,
+        });
+
+        if (requesterAccount?.role === "admin") {
+          const user = req.body;
+          const filter = { email: user.email };
+          const updateDoc = { $set: { verified: true } };
+          const result = await allUsersCollection.updateOne(filter, updateDoc);
+          res.json(result);
+        } else {
+          res.status(401).json({ massage: "user not an admin" });
+        }
+      }
+    });
+
+    app.delete("/allProducts/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await allProductsCollection.deleteOne(query);

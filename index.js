@@ -5,7 +5,7 @@ const {
   ObjectId,
 } = require("mongodb");
 
-// const admin = require("firebase-admin");
+const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -13,12 +13,14 @@ const port = process.env.PORT || 5000;
 
 require("dotenv").config();
 
-// //firebase
-// const serviceAccount = require("./sports-capturing-firebase-admin.json");
+// bicycle-surfers-firebase-adminsdk-b88jy-fc981bd3fd.json
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-// });
+//firebase
+const serviceAccount = require("./bicycle-surfers-firebase-adminsdk-b88jy-fc981bd3fd.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 // middlewares
 
@@ -34,16 +36,16 @@ const client = new MongoClient(uri, {
 
 //  token middleware
 
-// async function verifyToken(req, res, next) {
-//   if (req.headers?.authorization?.startsWith("Bearer ")) {
-//     const idToken = req.headers.authorization.split(" ")[1];
-//     try {
-//       const decodedUser = await admin.auth().verifyIdToken(idToken);
-//       req.decodedEmail = decodedUser.email;
-//     } catch {}
-//   }
-//   next();
-// }
+async function verifyToken(req, res, next) {
+  if (req.headers?.authorization?.startsWith("Bearer ")) {
+    const idToken = req.headers.authorization.split(" ")[1];
+    try {
+      const decodedUser = await admin.auth().verifyIdToken(idToken);
+      req.decodedEmail = decodedUser.email;
+    } catch {}
+  }
+  next();
+}
 
 async function run() {
   try {
@@ -131,13 +133,33 @@ async function run() {
     });
 
     //update booking
-    app.put("/booking/:id", async (req, res) => {
+    app.put("/booking/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
-      const filter = { _id: ObjectId(id) };
-      const updateDoc = { $set: { paid: true } };
+      const requester = req.decodedEmail;
 
-      const result = await allBookingCollection.updateOne(filter, updateDoc);
-      res.json(result);
+      if (requester) {
+        const requesterAccount = await allUsersCollection.findOne({
+          email: requester,
+        });
+        if (requesterAccount.role === "buyer") {
+          const filter = { _id: ObjectId(id) };
+          const updateDoc = { $set: { paid: "true" } };
+          const result = await allBookingCollection.updateOne(
+            filter,
+            updateDoc
+          );
+          res.json(result);
+        }
+      } else {
+        res.status(401).json({ massage: "user not an buyer" });
+      }
+    });
+
+    app.delete("/addProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await allProductsCollection.deleteOne(query);
+      res.send(result);
     });
   } finally {
   }
